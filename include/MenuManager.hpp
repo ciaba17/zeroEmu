@@ -3,14 +3,28 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
+#include <utility>
 #include "../include/InputManager.hpp"
 
 class MenuManager {
-public:
+private:
+    int emulatorIndex = 0; // Index of the current emulator
     std::unordered_map<std::string, SDL_Rect> items; // List of menu items
+    std::vector<std::pair<SDL_Texture*, SDL_Texture*>> emulatorTextures; // Pair of emulator logo and wallpaper textures
 
-    MenuManager();
+    bool rightPressed = false;
+    bool leftPressed = false;
+
+    int initialPosition;
+    bool isTransitioning = false;
+    float transitionProgress = 0.0; // da 0.0 a 1.0
+    const float transitionSpeed = 0.1; // più piccolo = più lento
+    const float transitionDistance = 0.1; // Distanza di transizione in pixel
+
+public:
+    MenuManager(std::unordered_map<std::string, SDL_Texture*>* textures);
     void addItem(const std::string& itemName, SDL_Rect);
     void handleInput(InputManager& inputManager);
-    void render(SDL_Renderer* renderer, std::unordered_map<std::string, SDL_Texture*>* textures);
+    void transition();
+    void render(SDL_Renderer* renderer);
 };

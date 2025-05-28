@@ -5,6 +5,9 @@ TextureManager::TextureManager(SDL_Renderer* renderer) : renderer(renderer) {
     loadSingleTexture("NES", "assets/nesLogo.png");
     loadSingleTexture("NESWP", "assets/nesWP.png");
 
+    loadSingleTexture("atari", "assets/atariLogo.png");
+    loadSingleTexture("atariWP", "assets/atariWP.png");
+
 }
 
 void TextureManager::loadSingleTexture(std::string name, std::string path) {

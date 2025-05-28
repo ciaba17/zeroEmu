@@ -21,7 +21,7 @@ int main() {
     
     // Create all objects
     TextureManager TM(WM.renderer);
-    MenuManager menu;
+    MenuManager menu(&TM.textures);
     InputManager input;
 
     
@@ -67,7 +67,7 @@ void rendering(SDL_Renderer* renderer, WindowManager& WM, MenuManager& menu, Tex
     // Clear screen
     SDL_RenderClear(renderer);
     
-    menu.render(renderer, &TM.textures);
+    menu.render(renderer);
 
     SDL_RenderPresent(renderer);
 }
