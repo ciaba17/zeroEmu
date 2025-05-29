@@ -18,12 +18,13 @@ private:
     int initialPosition;
     bool isTransitioning = false;
     float transitionProgress = 0.0; // da 0.0 a 1.0
-    const float transitionSpeed = 0.1; // più piccolo = più lento
-    const float transitionDistance = 0.1; // Distanza di transizione in pixel
+    const float transitionSpeed = 0.3; // più piccolo = più lento
+    const float transitionDistance = 8; // Distanza di transizione in pixel
+    int WPTransparency = 255; // Opacità del menu
 
 public:
     MenuManager(std::unordered_map<std::string, SDL_Texture*>* textures);
-    void addItem(const std::string& itemName, SDL_Rect);
+    void addItem(const std::string& itemName, SDL_FRect);
     void handleInput(InputManager& inputManager);
     void transition();
     void render(SDL_Renderer* renderer);

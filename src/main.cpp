@@ -10,6 +10,8 @@
 #include "../include/TextureManager.hpp"
 #include "../include/InputManager.hpp"
 
+Uint32 frameStart;
+
 void rendering(SDL_Renderer* renderer, WindowManager& WM, MenuManager& menu, TextureManager& TM);
 
 int main() {
@@ -31,6 +33,7 @@ int main() {
     
     // Event loop
     while(!quit) {
+        frameStart = SDL_GetTicks();
         SDL_Event e;
 
         while (SDL_PollEvent(&e)) {
@@ -44,6 +47,14 @@ int main() {
 
         menu.handleInput(input);
         rendering(WM.renderer, WM, menu, TM);
+
+
+
+        frameTime = SDL_GetTicks() - frameStart;
+
+        if (frameDelay > frameTime) {
+            SDL_Delay(frameDelay - frameTime);
+        }
     }
 
     // Destroy renderer

@@ -2,12 +2,18 @@
 
 TextureManager::TextureManager(SDL_Renderer* renderer) : renderer(renderer) {
     // Load all textures at initialization
-    loadSingleTexture("NES", "assets/nesLogo.png");
     loadSingleTexture("NESWP", "assets/nesWP.png");
+    loadSingleTexture("NES", "assets/nesLogo.png");
 
-    loadSingleTexture("atari", "assets/atariLogo.png");
     loadSingleTexture("atariWP", "assets/atariWP.png");
+    loadSingleTexture("atari", "assets/atariLogo.png");
 
+    loadSingleTexture("gameboyWP", "assets/gameboyWP.png");
+    loadSingleTexture("gameboy", "assets/gameboyLogo.png");
+
+    for (const auto& pair : textures) {
+        SDL_SetTextureBlendMode(pair.second, SDL_BLENDMODE_BLEND); // activare blending
+    }
 }
 
 void TextureManager::loadSingleTexture(std::string name, std::string path) {
