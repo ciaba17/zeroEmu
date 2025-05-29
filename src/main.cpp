@@ -78,7 +78,14 @@ void rendering(SDL_Renderer* renderer, WindowManager& WM, MenuManager& menu, Tex
     // Clear screen
     SDL_RenderClear(renderer);
     
-    menu.render(renderer);
+    if (consolesMenu) {
+        menu.menuRender(renderer);
+    }
+    else if (gamesMenu) {
+
+    }
+    
+    menu.menuRender(renderer);
 
     SDL_RenderPresent(renderer);
 }

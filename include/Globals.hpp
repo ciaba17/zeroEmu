@@ -9,3 +9,6 @@ extern int frameTime;
 
 extern int windowPosx;
 extern int windowPosy;
+
+extern bool consolesMenu;
+extern bool gamesMenu;

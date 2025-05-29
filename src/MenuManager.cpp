@@ -6,8 +6,8 @@ MenuManager::MenuManager(std::unordered_map<std::string, SDL_Texture*>* textures
     const int w = SCREEN_WIDTH;
     const int h = SCREEN_HEIGHT;
 
+    // Consoles menu part
     const SDL_FRect emulatorLine = {w/2, h/1.5, w, h/7};
-    const SDL_FRect emulatorLogoBox = {w/2, h/1.5, w/3.8, h/9.8};
     const SDL_FRect previousEmulatorLogoBox = {w/2 - w/3, h/1.5, w/11, h/17};
     const SDL_FRect nextEmulatorLogoBox = {w/2 + w/3, h/1.5, w/11, h/17};
 
@@ -15,6 +15,8 @@ MenuManager::MenuManager(std::unordered_map<std::string, SDL_Texture*>* textures
     addItem("emulatorLogoBox", emulatorLogoBox);
     addItem("previousEmulatorLogoBox", previousEmulatorLogoBox);
     addItem("nextEmulatorLogoBox", nextEmulatorLogoBox);
+
+    // Set the initial position of the central emulator logo box
     initialPosition = items["emulatorLogoBox"].x;
 
     emulatorTextures.push_back(
@@ -37,6 +39,10 @@ MenuManager::MenuManager(std::unordered_map<std::string, SDL_Texture*>* textures
             (*textures)["gameboy"]
         )
     );
+
+
+    // Games menu part
+    const SDL_FRect gameLine = {w/2, h/1.5, w/2, h/7};
 }
 
 void MenuManager::addItem(const std::string& itemName, SDL_FRect rect) {
@@ -100,7 +106,7 @@ void MenuManager::transition() {
     }
 }
 
-void MenuManager::render(SDL_Renderer* renderer) {
+void MenuManager::menuRender(SDL_Renderer* renderer) {
     // Draw the background for the current emulator
     SDL_RenderCopy(renderer, emulatorTextures[emulatorIndex].first, nullptr, nullptr);
     
@@ -126,5 +132,23 @@ void MenuManager::render(SDL_Renderer* renderer) {
         SDL_RenderCopy(renderer, emulatorTextures[emulatorIndex-1].second, nullptr, &items["previousEmulatorLogoBox"]);
         SDL_RenderCopy(renderer, emulatorTextures[emulatorIndex+1].second, nullptr, &items["nextEmulatorLogoBox"]);
     }
+}
 
-    }
+
+void MenuManager::gamesRender(SDL_Renderer* renderer) {
+
+}
+
+
+Emulator::Emulator(const int index, SDL_Texture* logo, SDL_Texture* background, const std::string& emulatorPath)
+    : index(index), logo(logo), background(background), emulatorPath(emulatorPath) {
+        
+    const int w = SCREEN_WIDTH;
+    const int h = SCREEN_HEIGHT;
+        
+    // Set the logo rectangle to a default size
+    logoRect = {w/2, h/1.5, w/3.8, h/9.8};   
+    secondaryLogoRect = {w/2, h/1.5, w/11, h/17};
+    
+
+}

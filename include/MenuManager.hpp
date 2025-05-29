@@ -27,5 +27,33 @@ public:
     void addItem(const std::string& itemName, SDL_FRect);
     void handleInput(InputManager& inputManager);
     void transition();
-    void render(SDL_Renderer* renderer);
+
+    void menuRender(SDL_Renderer* renderer);
+    void gamesRender(SDL_Renderer* renderer);
+};
+
+
+class Emulator {
+public:
+    Emulator(const int index, SDL_Texture* logo, SDL_Texture* background, const std::string& emulatorPath);
+
+    const int index;
+    SDL_Texture* logo;
+    SDL_Texture* background;
+    std::string emulatorPath;
+    SDL_FRect logoRect;
+    SDL_FRect secondaryLogoRect;
+
+
+};
+
+
+class Game {
+public:
+    std::string name;
+    std::string path;
+    SDL_Texture* texture;
+
+    Game(const std::string& name, const std::string& path, SDL_Texture* texture)
+        : name(name), path(path), texture(texture) {}
 };
