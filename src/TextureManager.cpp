@@ -14,6 +14,9 @@ TextureManager::TextureManager(SDL_Renderer* renderer) : renderer(renderer) {
     loadSingleTexture("snesBG", "assets/snesBG.png");
     loadSingleTexture("snes", "assets/snesLogo.png");
 
+    loadSingleTexture("psBG", "assets/psBG.png");
+    loadSingleTexture("ps", "assets/psLogo.png");
+
     for (const auto& pair : textures) {
         SDL_SetTextureBlendMode(pair.second, SDL_BLENDMODE_BLEND); // activare blending
     }

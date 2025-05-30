@@ -17,6 +17,8 @@ public:
     bool rightmost = false;;
     bool leftmost = false;
     int targetX;
+    bool shouldAnimate = true;
+    bool selected = false;
 
     SDL_Rect logoRect = {
         int(SCREEN_WIDTH/2), 
@@ -48,13 +50,6 @@ private:
 
     bool rightPressed = false;
     bool leftPressed = false;
-
-    int initialPosition;
-    bool isTransitioning = false;
-    float transitionProgress = 0.0; // da 0.0 a 1.0
-    const float transitionSpeed = 0.3; // più piccolo = più lento
-    const float transitionDistance = 8; // Distanza di transizione in pixel
-    int WPTransparency = 255; // Opacità del menu
 
 public:
     MenuManager(std::unordered_map<std::string, SDL_Texture*>* textures);

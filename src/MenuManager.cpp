@@ -25,13 +25,13 @@ MenuManager::MenuManager(std::unordered_map<std::string, SDL_Texture*>* textures
     emulators.push_back(Emulator((*textures)["atari"], (*textures)["atariBG"], "atari2600", emulators));
     emulators.push_back(Emulator((*textures)["gameboy"], (*textures)["gameboyBG"], "gameboy", emulators));
     emulators.push_back(Emulator((*textures)["snes"], (*textures)["snesBG"], "snes", emulators));
-
-
-    // Set the initial position of the central emulator logo box
-    initialPosition = items["emulatorLogoBox"].x;
+    emulators.push_back(Emulator((*textures)["ps"], (*textures)["psBG"], "ps", emulators));
+    emulators[0].selected = true; // Set the first emulator as selected
 
     // Games menu part
     const SDL_FRect gameLine = {w/2, h/1.5, w/2, h/7};
+
+    updateTargetPositions();
 }
 
 void MenuManager::addItem(const std::string& itemName, SDL_FRect rect) {
@@ -59,12 +59,12 @@ void MenuManager::handleInput(InputManager& inputManager) {
 
     // Input took only if the key is released, this prevents the transition from being triggered multiple times
     if (leftPressed && !inputManager.isKeyPressed(SDL_SCANCODE_LEFT)) {
-        emulatorIndex = (emulatorIndex + 1) % emulators.size();
+        emulatorIndex = (emulatorIndex - 1 + emulators.size()) % emulators.size();
         leftPressed = false;
         updateTargetPositions();
     }
     else if (rightPressed && !inputManager.isKeyPressed(SDL_SCANCODE_RIGHT)) {
-        emulatorIndex = (emulatorIndex - 1 + emulators.size()) % emulators.size();
+        emulatorIndex = (emulatorIndex + 1) % emulators.size();
         rightPressed = false;
         updateTargetPositions();
     }
@@ -78,14 +78,25 @@ void MenuManager::updateTargetPositions()
 
     int total = emulators.size();
 
+
     for (int i = 0; i < total; ++i) {
         // Calculate the target position for each emulator logo
         // The target position is calculated based on the current index and the center index
         int offset = i - emulatorIndex;
 
-        // Circolarità
+        // Adjust the offset to ensure it wraps around correctly
         if (offset > total / 2) offset -= total;
         if (offset < -total / 2) offset += total;
+
+        float newTargetX = centerX + offset * spacing;
+
+        // If the distance to the new target position is greater than half the screen width, it teleport the logo
+        if (std::abs(emulators[i].targetX - newTargetX) > SCREEN_WIDTH / 2) {
+            emulators[i].shouldAnimate = false;
+            emulators[i].logoRect.x = newTargetX; // Teleport
+        } else {
+            emulators[i].shouldAnimate = true; // Standard animation
+        }
 
         emulators[i].targetX = centerX + offset * spacing;
     }
@@ -94,23 +105,22 @@ void MenuManager::updateTargetPositions()
 
 
 void MenuManager::menuRender(SDL_Renderer* renderer) {
-    // Draw the background for the current emulator
+    // Draw the background
     SDL_RenderCopy(renderer, emulators[emulatorIndex].background, nullptr, nullptr);
-    
+
     // Draw the emulator line
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 180);
     SDL_RenderFillRect(renderer, &items["emulatorLine"]);
     
     // Draw the logo for the current emulator
-    SDL_RenderCopy(renderer, emulators[emulatorIndex].logo, nullptr, &emulators[emulatorIndex].logoRect);
-
     for (Emulator& emulator : emulators)
 {
-    // interpolazione lineare
-    float speed = 0.2f; // più piccolo = più fluido
+    // Linear interpolation for smooth movement
+    const float speed = 0.2f;
     emulator.logoRect.x += (emulator.targetX - emulator.logoRect.x) * speed;
 
     if (emulator.onScreen()) {
+        // Draw the logo
         SDL_RenderCopy(renderer, emulator.logo, nullptr, &emulator.logoRect);
     }
 }
