@@ -2,6 +2,13 @@
 #include "../include/Globals.hpp"
 #include "../include/InputManager.hpp"
 
+Emulator::Emulator(SDL_Texture* logo, SDL_Texture* background, const std::string& emulatorPath, std::vector<Emulator>& emulators)
+    : logo(logo), background(background), emulatorPath(emulatorPath) {        
+        // Center the logo rectangle
+        logoRect.y -= logoRect.h/2;
+
+}
+
 MenuManager::MenuManager(std::unordered_map<std::string, SDL_Texture*>* textures) {
     const int w = SCREEN_WIDTH;
     const int h = SCREEN_HEIGHT;
@@ -12,34 +19,16 @@ MenuManager::MenuManager(std::unordered_map<std::string, SDL_Texture*>* textures
     const SDL_FRect nextEmulatorLogoBox = {w/2 + w/3, h/1.5, w/11, h/17};
 
     addItem("emulatorLine", emulatorLine);
-    addItem("emulatorLogoBox", emulatorLogoBox);
-    addItem("previousEmulatorLogoBox", previousEmulatorLogoBox);
-    addItem("nextEmulatorLogoBox", nextEmulatorLogoBox);
+
+    // Add the emulators to the menu
+    emulators.push_back(Emulator((*textures)["nes"], (*textures)["nesBG"], "nes", emulators));
+    emulators.push_back(Emulator((*textures)["atari"], (*textures)["atariBG"], "atari2600", emulators));
+    emulators.push_back(Emulator((*textures)["gameboy"], (*textures)["gameboyBG"], "gameboy", emulators));
+    emulators.push_back(Emulator((*textures)["snes"], (*textures)["snesBG"], "snes", emulators));
+
 
     // Set the initial position of the central emulator logo box
     initialPosition = items["emulatorLogoBox"].x;
-
-    emulatorTextures.push_back(
-        std::make_pair(
-            (*textures)["NESWP"], 
-            (*textures)["NES"]
-        )
-    );
-
-    emulatorTextures.push_back(
-        std::make_pair(
-            (*textures)["atariWP"], 
-            (*textures)["atari"]
-        )
-    );
-
-    emulatorTextures.push_back(
-        std::make_pair(
-            (*textures)["gameboyWP"], 
-            (*textures)["gameboy"]
-        )
-    );
-
 
     // Games menu part
     const SDL_FRect gameLine = {w/2, h/1.5, w/2, h/7};
@@ -68,70 +57,64 @@ void MenuManager::handleInput(InputManager& inputManager) {
         leftPressed = true;
     }
 
-    if (rightPressed && !inputManager.isKeyPressed(SDL_SCANCODE_RIGHT)) {
-        if (emulatorIndex == emulatorTextures.size() - 1) {
-            emulatorIndex = 0; // Wrap around to the first emulator
-        } 
-        else {
-            emulatorIndex++;
-        }
-        isTransitioning = true;
-        rightPressed = false;
-    }
-    else if (leftPressed && !inputManager.isKeyPressed(SDL_SCANCODE_LEFT)) {
-        if (emulatorIndex == 0) {
-            emulatorIndex = emulatorTextures.size() - 1; // Wrap around to the last emulator
-        } 
-        else {
-            emulatorIndex--;
-        }
-        isTransitioning = true;
+    // Input took only if the key is released, this prevents the transition from being triggered multiple times
+    if (leftPressed && !inputManager.isKeyPressed(SDL_SCANCODE_LEFT)) {
+        emulatorIndex = (emulatorIndex + 1) % emulators.size();
         leftPressed = false;
+        updateTargetPositions();
     }
-
-    //transition();
-}
-
-void MenuManager::transition() {
-    if (isTransitioning) {
-        transitionProgress += transitionSpeed;
-        items["emulatorLogoBox"].x += transitionDistance;
-        WPTransparency-= 20;
-        if (transitionProgress >= 2.0f) {
-            transitionProgress = 0.0f;
-            items["emulatorLogoBox"].x = initialPosition;
-            WPTransparency = 255;
-            isTransitioning = false;
-        }
+    else if (rightPressed && !inputManager.isKeyPressed(SDL_SCANCODE_RIGHT)) {
+        emulatorIndex = (emulatorIndex - 1 + emulators.size()) % emulators.size();
+        rightPressed = false;
+        updateTargetPositions();
     }
 }
+
+
+void MenuManager::updateTargetPositions()
+{
+    const int centerX = SCREEN_WIDTH / 2 - SCREEN_WIDTH / 8; // center position for the current emulator logo
+    const int spacing = SCREEN_WIDTH / 3; // space between logos
+
+    int total = emulators.size();
+
+    for (int i = 0; i < total; ++i) {
+        // Calculate the target position for each emulator logo
+        // The target position is calculated based on the current index and the center index
+        int offset = i - emulatorIndex;
+
+        // Circolarità
+        if (offset > total / 2) offset -= total;
+        if (offset < -total / 2) offset += total;
+
+        emulators[i].targetX = centerX + offset * spacing;
+    }
+}
+
+
 
 void MenuManager::menuRender(SDL_Renderer* renderer) {
     // Draw the background for the current emulator
-    SDL_RenderCopy(renderer, emulatorTextures[emulatorIndex].first, nullptr, nullptr);
+    SDL_RenderCopy(renderer, emulators[emulatorIndex].background, nullptr, nullptr);
     
     // Draw the emulator line
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 180);
     SDL_RenderFillRect(renderer, &items["emulatorLine"]);
     
     // Draw the logo for the current emulator
-    SDL_RenderCopy(renderer, emulatorTextures[emulatorIndex].second, nullptr, &items["emulatorLogoBox"]);
+    SDL_RenderCopy(renderer, emulators[emulatorIndex].logo, nullptr, &emulators[emulatorIndex].logoRect);
 
-    if (emulatorIndex == 0) { 
-        // If it's the first emulator, wrap around to the last one
-        SDL_RenderCopy(renderer, emulatorTextures[emulatorIndex+1].second, nullptr, &items["nextEmulatorLogoBox"]);
-        SDL_RenderCopy(renderer, emulatorTextures[emulatorTextures.size()-1].second, nullptr, &items["previousEmulatorLogoBox"]);
+    for (Emulator& emulator : emulators)
+{
+    // interpolazione lineare
+    float speed = 0.2f; // più piccolo = più fluido
+    emulator.logoRect.x += (emulator.targetX - emulator.logoRect.x) * speed;
+
+    if (emulator.onScreen()) {
+        SDL_RenderCopy(renderer, emulator.logo, nullptr, &emulator.logoRect);
     }
-    else if (emulatorIndex == emulatorTextures.size() - 1) { 
-        // If it's the last emulator, wrap around to the first one
-        SDL_RenderCopy(renderer, emulatorTextures[emulatorIndex-1].second, nullptr, &items["previousEmulatorLogoBox"]);
-        SDL_RenderCopy(renderer, emulatorTextures[0].second, nullptr, &items["nextEmulatorLogoBox"]);
-    } 
-    else { 
-        // For all other emulators, render the previous and next ones
-        SDL_RenderCopy(renderer, emulatorTextures[emulatorIndex-1].second, nullptr, &items["previousEmulatorLogoBox"]);
-        SDL_RenderCopy(renderer, emulatorTextures[emulatorIndex+1].second, nullptr, &items["nextEmulatorLogoBox"]);
-    }
+}
+
 }
 
 
@@ -139,16 +122,3 @@ void MenuManager::gamesRender(SDL_Renderer* renderer) {
 
 }
 
-
-Emulator::Emulator(const int index, SDL_Texture* logo, SDL_Texture* background, const std::string& emulatorPath)
-    : index(index), logo(logo), background(background), emulatorPath(emulatorPath) {
-        
-    const int w = SCREEN_WIDTH;
-    const int h = SCREEN_HEIGHT;
-        
-    // Set the logo rectangle to a default size
-    logoRect = {w/2, h/1.5, w/3.8, h/9.8};   
-    secondaryLogoRect = {w/2, h/1.5, w/11, h/17};
-    
-
-}
