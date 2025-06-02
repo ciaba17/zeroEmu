@@ -45,7 +45,13 @@ int main() {
             quit = true;
         }
 
-        menu.handleInput(input);
+        if (emulatorsMenu) {
+            menu.handleEmulatorsInput(input);
+        }
+        else if (gamesMenu) {
+            menu.handleGamesInput(input);
+        }
+
         rendering(WM.renderer, WM, menu, TM);
 
 
@@ -72,20 +78,32 @@ int main() {
 
 
 void rendering(SDL_Renderer* renderer, WindowManager& WM, MenuManager& menu, TextureManager& TM) {
-    // Set renderer color white (background)
-    SDL_SetRenderDrawColor(WM.renderer, 255, 255, 255, 255); // bianco
-
-    // Clear screen
+    // Set renderer color black clearing the screen
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
     
-    if (consolesMenu) {
+    if (emulatorsMenu) {
         menu.menuRender(renderer);
     }
     else if (gamesMenu) {
+        menu.gamesRender(renderer, WM.font);    
 
     }
     
-    menu.menuRender(renderer);
 
     SDL_RenderPresent(renderer);
+}
+
+
+void inputHandler(SDL_Event& e, InputManager& input) {
+    // Handle input events
+    if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP) {
+        input.update(e);
+    }
+    
+    // Check for quit event
+    if (e.type == SDL_QUIT) {
+        // Handle quit event
+        std::cout << "Quit event received." << std::endl;
+    }
 }
