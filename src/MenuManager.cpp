@@ -1,7 +1,7 @@
 #include "../include/MenuManager.hpp"
 
-Emulator::Emulator(SDL_Texture* logo, SDL_Texture* background, const std::string& emulatorPath)
-    : logo(logo), background(background), emulatorPath(emulatorPath) {        
+Emulator::Emulator(SDL_Texture* logo, SDL_Texture* background, const std::string& name)
+    : logo(logo), background(background), name(name) {        
         // Center the logo rectangle
         logoRect.y -= logoRect.h/2;
 }
@@ -25,21 +25,24 @@ MenuManager::MenuManager(std::unordered_map<std::string, SDL_Texture*>* textures
     addItem("selectionBox", selectionBox); // Selection box for the current emulator
 
     // Add the emulators to the menu
-    emulators.push_back(Emulator((*textures)["nes"], (*textures)["nesBG"], "nes"));
+    emulators.push_back(Emulator((*textures)["nes"], (*textures)["nesBG"], "nes-emu"));
+    emulators.push_back(Emulator((*textures)["snes"], (*textures)["snesBG"], "snesemu"));
     emulators.push_back(Emulator((*textures)["atari"], (*textures)["atariBG"], "atari2600"));
     emulators.push_back(Emulator((*textures)["gameboy"], (*textures)["gameboyBG"], "gameboy"));
-    emulators.push_back(Emulator((*textures)["snes"], (*textures)["snesBG"], "snes"));
     emulators.push_back(Emulator((*textures)["ps"], (*textures)["psBG"], "ps"));
     emulators[0].selected = true; // Set the first emulator as selected
-    updateTarget(); // Initialize the target positions for the emulators
+    updateEmulatorTarget(); // Initialize the target positions for the emulators
 
 
 
     // --- GAMES MENU PART ---
-    games[0] = { // NES games
-        Game("Super Mario Bros.", "roms/nes/super_mario_bros.nes", (*textures)["superMario"]),
+    games[0] = { // nes games
+        Game("Super Mario Bros", "/home/Cai/Desktop/programmazione/zeroEmu/roms/nes/super_mario_bros.nes", (*textures)["superMario"]),
         Game("The Legend of Zelda", "roms/nes/zelda.nes", (*textures)["zelda"]),
         Game("Metroid", "roms/nes/metroid.nes", (*textures)["metroid"])
+    };
+    games[1] = { // snes games
+        Game("Super Metroid", "/home/Cai/Desktop/programmazione/zeroEmu/roms/snes/super_metroid.sfc", (*textures)["superMetroid"]),
     };
 }
 
@@ -67,18 +70,19 @@ void MenuManager::handleEmulatorsInput(InputManager& inputManager) {
     if (leftPressed && !inputManager.isKeyPressed(SDL_SCANCODE_LEFT)) {
         emulatorIndex = (emulatorIndex - 1 + emulators.size()) % emulators.size();
         leftPressed = false;
-        updateTarget();
+        updateEmulatorTarget();
     }
     else if (rightPressed && !inputManager.isKeyPressed(SDL_SCANCODE_RIGHT)) {
         emulatorIndex = (emulatorIndex + 1) % emulators.size();
         rightPressed = false;
-        updateTarget();
+        updateEmulatorTarget();
     }
     else if (enterPressed && !inputManager.isKeyPressed(SDL_SCANCODE_RETURN)) {
         // Transition to the games menu
         emulatorsMenu = false;
         gamesMenu = true;
         enterPressed = false;
+        updateGameTarget(); // Initialize the target positions for the games
     }
 }
 
@@ -89,10 +93,38 @@ void MenuManager::handleGamesInput(InputManager& inputManager) {
         gamesMenu = false;
         emulatorsMenu = true;
     }
+    else if (inputManager.isKeyPressed(SDL_SCANCODE_UP)) {
+        upPressed = true;
+    }
+    else if (inputManager.isKeyPressed(SDL_SCANCODE_DOWN)) {
+        downPressed = true;
+    }
+    else if (inputManager.isKeyPressed(SDL_SCANCODE_RETURN)) {
+        enterPressed = true;
+    }
+
+    if (upPressed && !inputManager.isKeyPressed(SDL_SCANCODE_UP)) {
+        if (gameIndex > 0) gameIndex--; // Check the boundaries
+        upPressed = false;
+        updateGameTarget();
+    }
+    else if (downPressed && !inputManager.isKeyPressed(SDL_SCANCODE_DOWN)) {
+        if (gameIndex + 1 < games[emulatorIndex].size()) gameIndex++; // Chek the boundaries
+        downPressed = false;
+        updateGameTarget();
+    }
+    else if (enterPressed && !inputManager.isKeyPressed(SDL_SCANCODE_RETURN)) {
+        enterPressed = false;
+        std::string romPath = games[emulatorIndex][gameIndex].path;
+        std::string command = emulators[emulatorIndex].name + " \"" + romPath + "\"";
+        system(command.c_str());
+        
+    }
+
 }
 
 
-void MenuManager::updateTarget()
+void MenuManager::updateEmulatorTarget()
 {
     // Set the selected state for the current emulator
     for (int i = 0; i < emulators.size(); ++i) {
@@ -130,6 +162,13 @@ void MenuManager::updateTarget()
 }
 
 
+void MenuManager::updateGameTarget() {
+    for (int i = 0; i < games[emulatorIndex].size(); ++i) {
+        games[emulatorIndex][i].selected = (i == gameIndex); 
+    }
+}
+
+
 
 void MenuManager::menuRender(SDL_Renderer* renderer) {
     // Draw the background
@@ -161,7 +200,12 @@ void MenuManager::gamesRender(SDL_Renderer* renderer, TTF_Font* font) {
         renderRect.y += i * (renderRect.h + 10); // Add spacing between games
         
         // Draw the game rectangle
-        SDL_SetRenderDrawColor(renderer, 0, 0, 100, 180);
+        if (game.selected) {
+            SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255); // Yellow for selected game
+        } 
+        else {
+            SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255); // Gray for unselected games
+        }
         SDL_RenderDrawRect(renderer, &renderRect);
 
         // Draw the game name

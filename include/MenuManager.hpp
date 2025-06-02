@@ -15,7 +15,7 @@ public:
 
     SDL_Texture* logo;
     SDL_Texture* background;
-    std::string emulatorPath;
+    std::string name;
     bool rightmost = false;;
     bool leftmost = false;
     int targetX;
@@ -39,6 +39,7 @@ public:
     std::string name;
     std::string path;
     SDL_Texture* texture;
+    bool selected = false;
 
     SDL_Rect rect = {
         int(SCREEN_WIDTH/4.5), 
@@ -61,6 +62,8 @@ private:
     bool rightPressed = false;
     bool leftPressed = false;
     bool enterPressed = false;
+    bool upPressed = false;
+    bool downPressed = false;
 
     const int logoWidth = SCREEN_WIDTH / 4.5;
     const int logoHeight = SCREEN_HEIGHT / 8;
@@ -72,7 +75,8 @@ public:
     void addItem(const std::string& itemName, SDL_Rect);
     void handleEmulatorsInput(InputManager& inputManager);
     void handleGamesInput(InputManager& inputManager);
-    void updateTarget();
+    void updateEmulatorTarget();
+    void updateGameTarget();
 
     void menuRender(SDL_Renderer* renderer);
     void gamesRender(SDL_Renderer* renderer, TTF_Font* font);
