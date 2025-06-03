@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
-#include <utility>
+#include <filesystem>
 #include "../include/InputManager.hpp"
 #include "../include/Globals.hpp"
 
@@ -30,7 +30,7 @@ public:
     };
 
     bool onScreen() {
-        return logoRect.x >= 0 && logoRect.x<= SCREEN_WIDTH;
+        return logoRect.x >= 0 && logoRect.x <= SCREEN_WIDTH;
     }
 };
 
@@ -49,6 +49,10 @@ public:
     };
 
     Game(const std::string& name, const std::string& path, SDL_Texture* texture);
+
+    bool onScreen() {
+        return rect.y >= 0 && rect.y <= SCREEN_HEIGHT;
+    }
 };
 
 class MenuManager {

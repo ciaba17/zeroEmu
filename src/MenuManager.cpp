@@ -36,14 +36,21 @@ MenuManager::MenuManager(std::unordered_map<std::string, SDL_Texture*>* textures
 
 
     // --- GAMES MENU PART ---
-    games[0] = { // nes games
-        Game("Super Mario Bros", "/home/Cai/Desktop/programmazione/zeroEmu/roms/nes/super_mario_bros.nes", (*textures)["superMario"]),
-        Game("The Legend of Zelda", "roms/nes/zelda.nes", (*textures)["zelda"]),
-        Game("Metroid", "roms/nes/metroid.nes", (*textures)["metroid"])
-    };
+    for (const auto& game : std::filesystem::directory_iterator("roms/nes")) {
+        if (game.path().extension() == ".nes") {
+            // Add the game to the nes games list
+            games[0].push_back(Game(game.path().stem().string(), game.path().string(), (*textures)["superMario"]));
+        }
+    }
     games[1] = { // snes games
         Game("Super Metroid", "/home/Cai/Desktop/programmazione/zeroEmu/roms/snes/super_metroid.sfc", (*textures)["superMetroid"]),
     };
+
+    for (auto& [key, gameList] : games) {
+        for (int i = 0; i < gameList.size(); ++i) {
+            gameList[i].rect.y += i * (gameList[i].rect.h + 10); // Add some spacing between games
+        }
+    }
 }
 
 void MenuManager::addItem(const std::string& itemName, SDL_Rect rect) {
@@ -105,11 +112,27 @@ void MenuManager::handleGamesInput(InputManager& inputManager) {
 
     if (upPressed && !inputManager.isKeyPressed(SDL_SCANCODE_UP)) {
         if (gameIndex > 0) gameIndex--; // Check the boundaries
+
+        // If the gameIndex is less than 0 move down all the games
+        if (!games[emulatorIndex][gameIndex].onScreen()) {
+            for (Game& game : games[emulatorIndex]) {
+                game.rect.y += (game.rect.h + 10); // Move the game rectangle down
+            }
+        }
+        
         upPressed = false;
         updateGameTarget();
     }
     else if (downPressed && !inputManager.isKeyPressed(SDL_SCANCODE_DOWN)) {
-        if (gameIndex + 1 < games[emulatorIndex].size()) gameIndex++; // Chek the boundaries
+        if (gameIndex + 1 < games[emulatorIndex].size()) gameIndex++; // Check the boundaries
+
+        // If the gameIndex exceeds the number of games on screen move up all the games
+        if (!games[emulatorIndex][gameIndex].onScreen()) {
+            for (Game& game : games[emulatorIndex]) {
+                game.rect.y -= (game.rect.h + 10); // Move the game rectangle up
+            }
+        }
+
         downPressed = false;
         updateGameTarget();
     }
@@ -117,7 +140,7 @@ void MenuManager::handleGamesInput(InputManager& inputManager) {
         enterPressed = false;
         std::string romPath = games[emulatorIndex][gameIndex].path;
         std::string command = emulators[emulatorIndex].name + " \"" + romPath + "\"";
-        system(command.c_str());
+        system(command.c_str()); // Execute the command to run the game
         
     }
 
@@ -197,7 +220,6 @@ void MenuManager::gamesRender(SDL_Renderer* renderer, TTF_Font* font) {
         Game& game = games[emulatorIndex][i];
 
         SDL_Rect renderRect = game.rect; // Create a copy of the rectangle
-        renderRect.y += i * (renderRect.h + 10); // Add spacing between games
         
         // Draw the game rectangle
         if (game.selected) {
